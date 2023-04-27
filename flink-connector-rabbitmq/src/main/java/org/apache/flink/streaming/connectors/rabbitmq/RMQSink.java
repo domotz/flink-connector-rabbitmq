@@ -25,6 +25,7 @@ import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.flink.streaming.connectors.rabbitmq.common.RMQConnectionConfig;
 import org.apache.flink.util.Preconditions;
 
+import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -106,6 +107,35 @@ public class RMQSink<IN> extends RichSinkFunction<IN> {
             SerializationSchema<IN> schema,
             RMQSinkPublishOptions<IN> publishOptions) {
         this(rmqConnectionConfig, null, schema, publishOptions, null);
+    }
+
+    @PublicEvolving
+    public RMQSink(
+            RMQConnectionConfig rmqConnectionConfig,
+            SerializationSchema<IN> schema,
+            String exchangeName,
+            String routingKey) {
+        this(
+                rmqConnectionConfig,
+                null,
+                schema,
+                new RMQSinkPublishOptions() {
+                    @Override
+                    public String computeRoutingKey(Object a) {
+                        return routingKey;
+                    }
+
+                    @Override
+                    public AMQP.BasicProperties computeProperties(Object a) {
+                        return null;
+                    }
+
+                    @Override
+                    public String computeExchange(Object a) {
+                        return exchangeName;
+                    }
+                },
+                null);
     }
 
     /**
